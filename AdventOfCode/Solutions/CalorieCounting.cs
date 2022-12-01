@@ -1,9 +1,6 @@
-﻿namespace AdventOfCode.Cli.Solutions;
+﻿using AdventOfCode.Cli.Infrastructure;
 
-internal interface ISolution
-{
-    void Run(EntryPoint entryPoint);
-}
+namespace AdventOfCode.Cli.Solutions;
 
 internal class CalorieCounting : ISolution
 {

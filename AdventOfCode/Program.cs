@@ -1,4 +1,5 @@
-﻿using AdventOfCode.Cli.Solutions;
+﻿using AdventOfCode.Cli.Infrastructure;
+using AdventOfCode.Cli.Solutions;
 
 var entryPoints = new Dictionary<string, EntryPoint>
 {
