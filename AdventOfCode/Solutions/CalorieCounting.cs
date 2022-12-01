@@ -30,6 +30,9 @@ internal class CalorieCounting : ISolution
             }
         }
 
-        Console.WriteLine($"Elf with the most calories in the bag has {elfBags.Max()} calories.");
+        var ordered = elfBags.OrderByDescending(b => b).ToArray();
+
+        Console.WriteLine($"Elf with the most calories in the bag has {ordered[0]} calories.");
+        Console.WriteLine($"Top three elves with the most calories in the bag have {ordered[..3].Sum()} calories in total.");
     }
 }
