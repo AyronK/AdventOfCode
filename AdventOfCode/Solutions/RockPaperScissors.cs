@@ -34,14 +34,40 @@ internal class RockPaperScissors : ISolution
 
         int totalScore = 0;
 
+        int totalScoreForSnakeRound = 0;
+
         while (!reader.EndOfStream)
         {
             var line = reader.ReadLine() ?? throw new NullReferenceException();
+            char firstCharacter = line[0];
+            char secondCharacter = line[^1];
 
             totalScore += _moveScore[line];
-            totalScore += _shapeScore[line[^1]];
+            totalScore += _shapeScore[secondCharacter];
+
+            var counterMove = GetCounterMove(firstCharacter, secondCharacter == 'Z', secondCharacter == 'Y');
+            totalScoreForSnakeRound += _moveScore[firstCharacter + " " + counterMove];
+            totalScoreForSnakeRound += _shapeScore[counterMove];
         }
-        
+
         Console.WriteLine($"Your total score in elvish rock paper scissors tournament is {totalScore}.");
+        Console.WriteLine($"Your total score in snake modified elvish rock paper scissors tournament is {totalScoreForSnakeRound}.");
+    }
+
+    private static char GetCounterMove(char opponentsMove, bool win, bool draw)
+    {
+        return opponentsMove switch
+        {
+            'A' when draw => 'X',
+            'A' when win => 'Y',
+            'A' => 'Z',
+            'B' when draw => 'Y',
+            'B' when win => 'Z',
+            'B' => 'X',
+            'C' when draw => 'Z',
+            'C' when win => 'X',
+            'C' => 'Y',
+            _ => throw new ArgumentOutOfRangeException(nameof(opponentsMove), opponentsMove, null)
+        };
     }
 }
