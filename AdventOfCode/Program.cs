@@ -6,6 +6,9 @@ var entryPoints = new Dictionary<string, EntryPoint>
     {
         "1", new EntryPoint("--- Day 1 Calorie Counting ---", "https://adventofcode.com/2022/day/1", "../../../../Inputs/--- Day 1 Calorie Counting ---.txt")
     },
+    {
+        "2", new EntryPoint("--- Day 2: Rock Paper Scissors ---", "https://adventofcode.com/2022/day/2", "../../../../Inputs/--- Day 2 Rock Paper Scissors ---.txt")
+    },
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -26,6 +29,7 @@ if (!entryPoints.Keys.Contains(choice))
 ISolution solution = choice switch
 {
     "1" => new CalorieCounting(),
+    "2" => new RockPaperScissors(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 
