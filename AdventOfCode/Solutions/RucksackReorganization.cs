@@ -10,9 +10,15 @@ internal class RucksackReorganization : ISolution
         using var reader = new StreamReader(file);
 
         int sumOfPriorities = 0;
+        int sumOfBadgePriorities = 0;
+        int elfIndex = 0;
+
+        HashSet<char> previousElfRucksack = new();
 
         while (!reader.EndOfStream)
         {
+            elfIndex++;
+            
             var rucksackItems = reader.ReadLine()?.ToCharArray() ?? Array.Empty<char>();
             var indexOfRucksackCompartmentsSplit = rucksackItems.Length / 2;
 
@@ -29,9 +35,29 @@ internal class RucksackReorganization : ISolution
                     break;
                 }
             }
+
+            var groupId = elfIndex % 3;
+            var isFirstInGroup = groupId == 1;
+            var isLastInGroup = groupId == 0;
+
+            if (isFirstInGroup)
+            {
+                previousElfRucksack.Clear();
+                previousElfRucksack.UnionWith(rucksackItems);
+            }
+            else
+            {
+                previousElfRucksack.IntersectWith(rucksackItems);
+
+                if (isLastInGroup)
+                {
+                    sumOfBadgePriorities += GetScore(previousElfRucksack.Single());
+                }
+            }
         }
 
         Console.WriteLine($"The sum of priorities of disorganized items in the rucksacks is {sumOfPriorities}.");
+        Console.WriteLine($"The sum of priorities of budges is {sumOfBadgePriorities}.");
     }
 
     private static int GetScore(char c) => c switch
