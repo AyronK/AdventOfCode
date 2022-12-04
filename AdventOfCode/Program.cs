@@ -5,7 +5,8 @@ var entryPoints = new List<EntryPoint>
 {
     new("--- Day 1: Calorie Counting ---", "../../../../Inputs/--- Day 1 Calorie Counting ---.txt"),
     new("--- Day 2: Rock Paper Scissors ---", "../../../../Inputs/--- Day 2 Rock Paper Scissors ---.txt"),
-    new("--- Day 3: Rucksack Reorganization ---", "../../../../Inputs/--- Day 3 Rucksack Reorganization ---.txt")
+    new("--- Day 3: Rucksack Reorganization ---", "../../../../Inputs/--- Day 3 Rucksack Reorganization ---.txt"),
+    new("--- Day 4: Camp Cleanup ---", "../../../../Inputs/--- Day 4 Camp Cleanup ---.txt"),
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -29,6 +30,7 @@ ISolution solution = choiceNumber switch
     1 => new CalorieCounting(),
     2 => new RockPaperScissors(),
     3 => new RucksackReorganization(),
+    4 => new CampCleanup(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 
