@@ -6,7 +6,6 @@ internal class NoSpaceLeftOnDevice : ISolution
 {
     public interface IFileNode
     {
-        DirectoryNode? Parent { get; }
         string Name { get; }
         int Size { get; }
     }
@@ -29,62 +28,76 @@ internal class NoSpaceLeftOnDevice : ISolution
 
         while (!reader.EndOfStream)
         {
-            var line = reader.ReadLine() ?? string.Empty;
+            var input = reader.ReadLine()!.Split(' ');
 
-            var input = line.Split(' ');
-
-            if (input[0] == "$")
+            switch (input[0])
             {
-                if (input[1] == "ls")
+                case "$" when input[1] == "ls":
                 {
-                    continue;
+                    break;
                 }
-
-                if (input[1] == "cd" && input[2] == "/")
+                case "$" when input[1] == "cd":
                 {
-                    currentDirectory = root;
+                    currentDirectory = input[2] switch
+                    {
+                        "/" => root,
+                        ".." => currentDirectory.Parent ?? throw new InvalidOperationException(),
+                        _ => (DirectoryNode)currentDirectory.Files[input[2]],
+                    };
+                    break;
                 }
-                else if (input[1] == "cd" && input[2] == "..")
-                {
-                    currentDirectory = currentDirectory.Parent ?? throw new InvalidOperationException();
-                }
-                else if (input[1] == "cd")
-                {
-                    currentDirectory = (DirectoryNode)currentDirectory.Files[input[2]];
-                }
-            }
-            else
-            {
-                if (input[0] == "dir")
+                case "dir":
                 {
                     currentDirectory.Files.Add(input[1], new DirectoryNode(input[1], currentDirectory));
+                    break;
                 }
-                else
+                default:
                 {
                     currentDirectory.Files.Add(input[1], new FileNode(input[1], int.Parse(input[0]), currentDirectory));
+                    break;
                 }
             }
         }
 
         int total = 0;
-        DisplayAndSumTotal(root, ref total);
-        Console.WriteLine(total);
+        int sizeOfSmallestDirectoryToRemove = int.MaxValue;
+        var minimumFreeSpaceNeeded = 30000000 - (70000000 - root.Size);
+
+        SumTotal(root, 100000, ref total);
+        FindSmallestToRemove(root, minimumFreeSpaceNeeded , ref sizeOfSmallestDirectoryToRemove);
+
+        Console.WriteLine($"The total size of all of the directories with a total size of at most 100000 is {total}.");
+        Console.WriteLine($"The total size directory that will free up the space is {sizeOfSmallestDirectoryToRemove}.");
     }
 
-    private void DisplayAndSumTotal(DirectoryNode node, ref int total)
+    private static void SumTotal(DirectoryNode node, int maxSize, ref int total)
     {
-        if (node is { Size: <= 100000 })
+        if (node.Size <= maxSize)
         {
             total += node.Size;
         }
-        
-        Console.WriteLine($"{node.Name} - {node.Size}");
 
         foreach (var fileNode in node.Files.Values)
         {
             if (fileNode is DirectoryNode dir)
             {
-                DisplayAndSumTotal(dir, ref total);
+                SumTotal(dir, maxSize, ref total);
+            }
+        }
+    }   
+    
+    private static void FindSmallestToRemove(DirectoryNode node, int minSize, ref int smallestSize)
+    {
+        if (node.Size >= minSize)
+        {
+            smallestSize = Math.Min(node.Size, smallestSize);
+        }
+
+        foreach (var fileNode in node.Files.Values)
+        {
+            if (fileNode is DirectoryNode dir)
+            {
+                FindSmallestToRemove(dir, minSize, ref smallestSize);
             }
         }
     }
