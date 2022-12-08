@@ -10,6 +10,7 @@ var entryPoints = new List<EntryPoint>
     new("--- Day 5: Supply Stacks ---", "../../../../Inputs/--- Day 5 Supply Stacks ---.txt"),
     new("--- Day 6: Tuning Trouble ---", "../../../../Inputs/--- Day 6 Tuning Trouble ---.txt"),
     new("--- Day 7: No Space Left On Device ---", "../../../../Inputs/--- Day 7 No Space Left On Device ---.txt"),
+    new("--- Day 8: Treetop Tree House ---", "../../../../Inputs/--- Day 8 Treetop Tree House ---.txt"),
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -37,6 +38,7 @@ ISolution solution = choiceNumber switch
     5 => new SupplyStacks(),
     6 => new TuningTrouble(),
     7 => new NoSpaceLeftOnDevice(),
+    8 => new TreetopTreeHouse(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 
