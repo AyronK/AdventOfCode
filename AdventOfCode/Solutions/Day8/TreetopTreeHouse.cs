@@ -38,6 +38,48 @@ internal class TreetopTreeHouse : ISolution
             }
         }
 
+        int maxScenicScore = 0;
+
+        for (int row = 1; row < grid.Length - 1; row++)
+        {
+            for (int column = 1; column < grid[0].Length - 1; column++)
+            {
+                int left = 0;
+                int right = 0;
+                int top = 0;
+                int bottom = 0;
+                
+                var currentItem = grid[row][column];
+
+                for (int i = column -1; i >= 0; i--)
+                {
+                    left++;
+                    if(grid[row][i] >= currentItem) break;
+                }
+                
+                for (int i = column + 1; i < grid[row].Length; i++)
+                {
+                    right++;
+                    if(grid[row][i] >= currentItem) break;
+                }
+
+                for (int i = row - 1; i >= 0; i--)
+                {
+                    top++;
+                    if(grid[i][column] >= currentItem) break;
+                }
+                
+                for (int i = row + 1; i < grid.Length; i++)
+                {
+                    bottom++;
+                    if(grid[i][column] >= currentItem) break;
+                }
+
+                maxScenicScore = Math.Max(maxScenicScore, left * right * top * bottom);
+            }
+        }
+
         Console.WriteLine($"There are {visible} visible trees in the grid.");
+        Console.WriteLine($"Maximum scenic score is {maxScenicScore}.");
     }
 }
