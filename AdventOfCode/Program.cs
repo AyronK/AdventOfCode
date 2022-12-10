@@ -12,6 +12,7 @@ var entryPoints = new List<EntryPoint>
     new("--- Day 7: No Space Left On Device ---", "../../../../Inputs/--- Day 7 No Space Left On Device ---.txt"),
     new("--- Day 8: Treetop Tree House ---", "../../../../Inputs/--- Day 8 Treetop Tree House ---.txt"),
     new("--- Day 9: Rope Bridge ---", "../../../../Inputs/--- Day 9 Rope Bridge ---.txt"),
+    new("--- Day 10: Cathode-Ray Tube ---", "../../../../Inputs/--- Day 10 Cathode-Ray Tube ---.txt"),
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -41,6 +42,7 @@ ISolution solution = choiceNumber switch
     7 => new NoSpaceLeftOnDevice(),
     8 => new TreetopTreeHouse(),
     9 => new RopeBridge(),
+    10 => new CathodeRayTube(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 
