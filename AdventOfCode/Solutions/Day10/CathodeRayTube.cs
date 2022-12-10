@@ -1,4 +1,5 @@
-﻿using AdventOfCode.Cli.Infrastructure;
+﻿using System.Text;
+using AdventOfCode.Cli.Infrastructure;
 
 namespace AdventOfCode.Cli.Solutions;
 
@@ -29,15 +30,29 @@ internal class CathodeRayTube : ISolution
         }
 
         int count = cycles.Count;
-        List<int> signalStrengthByCycle = Enumerable.Repeat(0, count).ToList();
-        int sum = 1;
+        List<int> signalStrengthByCycle = Enumerable.Repeat(0, count + 1).ToList();
+        int registryValue = 1;
 
-        for (int i = 1; i < count; i++)
+        StringBuilder crt = new StringBuilder();
+
+        for (int i = 1; i <= count; i++)
         {
-            signalStrengthByCycle[i] = i * sum;
-            sum += cycles.Dequeue();
+            signalStrengthByCycle[i] = i * registryValue;
+
+            var crtPosition = (i % 40) - 1;
+
+            var shouldDraw = crtPosition >= registryValue - 1 && crtPosition <= registryValue + 1;
+            crt.Append(shouldDraw ? '#' : '.');
+
+            if (crtPosition == -1)
+            {
+                crt.AppendLine();
+            }
+
+            registryValue += cycles.TryDequeue(out var value) ? value : 0;
         }
 
+        Console.WriteLine(crt);
         Console.WriteLine($"20th: {signalStrengthByCycle[20]}");
         Console.WriteLine($"60th: {signalStrengthByCycle[60]}");
         Console.WriteLine($"100th: {signalStrengthByCycle[100]}");
