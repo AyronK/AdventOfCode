@@ -4,37 +4,59 @@ namespace AdventOfCode.Cli.Solutions;
 
 internal class MonkeyInTheMiddle : ISolution
 {
-    delegate void InspectItem(ref int item);
+    delegate long InspectItem(long item);
 
-    delegate int GetThrowTarget(int item);
+    delegate int GetThrowTarget(long item);
 
     class Monkey
     {
         private readonly InspectItem _inspect;
 
-        public Monkey(Queue<int> items, GetThrowTarget throwTo, InspectItem inspect)
+        public Monkey(Queue<long> items, GetThrowTarget throwTo, InspectItem inspect, long divisableBy)
         {
             Items = items;
             ThrowTo = throwTo;
+            DivisableBy = divisableBy;
             _inspect = inspect;
         }
 
-        public Queue<int> Items { get; init; }
-        public GetThrowTarget ThrowTo { get; init; }
-        public int Inspected { get; set; } = 0;
+        public Queue<long> Items { get; }
+        public GetThrowTarget ThrowTo { get; }
+        public long Inspected { get; private set; } = 0;
+        public long DivisableBy { get; }
 
-        public InspectItem Inspect => (ref int item) =>
+        public InspectItem Inspect => item =>
         {
-            _inspect(ref item);
             Inspected++;
+            return _inspect(item);
         };
     };
 
     public void Run(EntryPoint entryPoint)
     {
+        int numberOfRounds = 20;
+
+        // Part 1
         var monkeys = GetMonkeys(File.ReadAllLines(entryPoint.InputPath)).ToArray();
 
-        for (int round = 1; round <= 20; round++)
+        Start(monkeys, i => i / 3, numberOfRounds);
+        Console.WriteLine($"After {numberOfRounds} rounds:");
+        Display(monkeys);
+
+        // Part 2
+        numberOfRounds = 10000;
+
+        monkeys = GetMonkeys(File.ReadAllLines(entryPoint.InputPath)).ToArray();
+        long leastCommonMultiple = FindLeastCommonMultiple(monkeys.Select(monkey => monkey.DivisableBy).ToArray());
+        Start(monkeys, i => i % leastCommonMultiple, numberOfRounds);
+
+        Console.WriteLine($"After {numberOfRounds} rounds:");
+        Display(monkeys);
+    }
+
+    private static void Start(Monkey[] monkeys, Func<long, long> newValue, int numberOfRounds)
+    {
+        for (int round = 1; round <= numberOfRounds; round++)
         {
             foreach (var monkey in monkeys)
             {
@@ -42,14 +64,18 @@ internal class MonkeyInTheMiddle : ISolution
 
                 for (int itemIndex = 0; itemIndex < itemsCount; itemIndex++)
                 {
-                    int newItemValue = monkey.Items.Dequeue();
-                    monkey.Inspect(ref newItemValue);
-                    newItemValue = (int)Math.Floor(newItemValue / 3.0);
+                    long newItemValue = monkey.Items.Dequeue();
+                    newItemValue = monkey.Inspect(newItemValue);
+
+                    newItemValue = newValue(newItemValue);
                     monkeys[monkey.ThrowTo(newItemValue)].Items.Enqueue(newItemValue);
                 }
             }
         }
+    }
 
+    private static void Display(Monkey[] monkeys)
+    {
         for (var index = 0; index < monkeys.Length; index++)
         {
             var monkey = monkeys[index];
@@ -57,7 +83,7 @@ internal class MonkeyInTheMiddle : ISolution
         }
 
         var top = monkeys.OrderByDescending(m => m.Inspected).Take(2).ToArray();
-        Console.WriteLine($"Monkey business after 20 rounds it {top[0].Inspected * top[1].Inspected}");
+        Console.WriteLine($"Monkey business is {top[0].Inspected * top[1].Inspected}");
     }
 
     private static class StringRanges
@@ -74,29 +100,39 @@ internal class MonkeyInTheMiddle : ISolution
     {
         for (int i = 0; i < input.Length; i += 7)
         {
-            var items = input[i + 1][StringRanges.StartingItems].Split(',', StringSplitOptions.TrimEntries).Select(int.Parse);
+            var items = input[i + 1][StringRanges.StartingItems].Split(',', StringSplitOptions.TrimEntries).Select(long.Parse);
             var operationFormula = input[i + 2][StringRanges.Operation].Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var divisibleBy = int.Parse(input[i + 3][StringRanges.DivisableBy]);
             var ifTrue = int.Parse(input[i + 4][StringRanges.IfTrue]);
             var ifFalse = int.Parse(input[i + 5][StringRanges.IfFalse]);
 
             yield return new Monkey(
-                new Queue<int>(items),
+                new Queue<long>(items),
                 item => item % divisibleBy == 0 ? ifTrue : ifFalse,
-                (ref int item) => InspectOperation(ref item, operationFormula)
-            );
+                ParseOperation(operationFormula),
+                divisibleBy);
         }
     }
 
-    private static void InspectOperation(ref int item, string[] operationFormula)
+    private static InspectItem ParseOperation(string[] operationFormula)
     {
-        item = operationFormula[1] switch
+        return operationFormula[1] switch
         {
-            "*" when operationFormula[2] == "old" => item * item,
-            "*" => item * int.Parse(operationFormula[2]),
-            "+" when operationFormula[2] == "old" => item + item,
-            "+" => item + int.Parse(operationFormula[2]),
-            _ => throw new ArgumentOutOfRangeException()
+            "*" when operationFormula[2] == "old" => item => item * item,
+            "*" => item => item * int.Parse(operationFormula[2]),
+            "+" when operationFormula[2] == "old" => item => item + item,
+            "+" => item => item + int.Parse(operationFormula[2]),
+            _ => throw new ArgumentOutOfRangeException(),
         };
+    }
+
+    private static long FindLeastCommonMultiple(long[] numbers)
+    {
+        return numbers.Aggregate((source, curr) => source * curr / FindGreatestCommonDivision(source, curr));
+    }
+
+    private static long FindGreatestCommonDivision(long a, long b)
+    {
+        return b == 0 ? a : FindGreatestCommonDivision(b, a % b);
     }
 }
