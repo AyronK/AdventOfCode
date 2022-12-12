@@ -14,6 +14,7 @@ var entryPoints = new List<EntryPoint>
     new("--- Day 9: Rope Bridge ---", "../../../../Inputs/--- Day 9 Rope Bridge ---.txt"),
     new("--- Day 10: Cathode-Ray Tube ---", "../../../../Inputs/--- Day 10 Cathode-Ray Tube ---.txt"),
     new("--- Day 11: Monkey in the Middle ---", "../../../../Inputs/--- Day 11 Monkey in the Middle ---.txt"),
+    new("--- Day 12: Hill Climbing Algorithm ---", "../../../../Inputs/--- Day 12 Hill Climbing Algorithm ---.txt"),
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -45,6 +46,7 @@ ISolution solution = choiceNumber switch
     9 => new RopeBridge(),
     10 => new CathodeRayTube(),
     11 => new MonkeyInTheMiddle(),
+    12 => new HillClimbing(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 
