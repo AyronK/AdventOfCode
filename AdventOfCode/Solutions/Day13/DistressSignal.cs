@@ -4,6 +4,8 @@ namespace AdventOfCode.Cli.Solutions;
 
 internal class DistressSignal : ISolution
 {
+    private static readonly string[] DividerPackets = { "[[2]]", "[[6]]" };
+    
     public void Run(EntryPoint entryPoint)
     {
         using var file = File.OpenRead(entryPoint.InputPath);
@@ -12,11 +14,15 @@ internal class DistressSignal : ISolution
         int index = 1;
         int sum = 0;
 
+        List<string> packets = new();
+
         while (!reader.EndOfStream)
         {
-            bool? x = AreInCorrectOrder(reader.ReadLine(), reader.ReadLine());
+            var a = reader.ReadLine();
+            var b = reader.ReadLine();
+            int x = Compare(a, b);
 
-            if (x.HasValue && x.Value)
+            if (x == -1)
             {
                 sum += index;
             }
@@ -24,25 +30,36 @@ internal class DistressSignal : ISolution
             reader.ReadLine();
 
             index++;
+
+            packets.Add(a);
+            packets.Add(b);
         }
 
+        packets.AddRange(DividerPackets);
+
+        var sorted = packets.ToArray();
+        Array.Sort(sorted, Compare);
+
+        var decoderSignal = (Array.IndexOf(sorted, DividerPackets[0]) + 1) * (Array.IndexOf(sorted, DividerPackets[1]) + 1);
+
         Console.WriteLine($"The sum of the indices of pairs in correct order is {sum}.");
+        Console.WriteLine($"The decoder key for the distress signal is {decoderSignal}");
     }
 
-    private static bool? AreInCorrectOrder(string a, string b)
+    private static int Compare(string a, string b)
     {
         while (!string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b))
         {
             var aToken = GetToken(a);
             if (aToken.Length == 0)
             {
-                return true;
+                return -1;
             }
 
             var bToken = GetToken(b);
             if (bToken.Length == 0)
             {
-                return false;
+                return 1;
             }
 
             var aRemaining = a[GetRestRange(a, aToken)..];
@@ -52,12 +69,12 @@ internal class DistressSignal : ISolution
             {
                 if (aValue < bValue)
                 {
-                    return true;
+                    return -1;
                 }
 
                 if (aValue > bValue)
                 {
-                    return false;
+                    return 1;
                 }
             }
             else
@@ -72,11 +89,11 @@ internal class DistressSignal : ISolution
                     aToken = $"[{aToken}]";
                 }
 
-                var inner = AreInCorrectOrder(aToken[1..^1], bToken[1..^1]);
+                var inner = Compare(aToken[1..^1], bToken[1..^1]);
 
-                if (inner.HasValue)
+                if (inner != 0)
                 {
-                    return inner.Value;
+                    return inner;
                 }
             }
 
@@ -84,7 +101,7 @@ internal class DistressSignal : ISolution
             b = bRemaining;
         }
 
-        return b.Length > 0 ? true : a.Length > 0 ? false : null;
+        return b.Length > 0 ? -1 : a.Length > 0 ? 1 : 0;
     }
 
     private static int GetRestRange(string text, string token)
