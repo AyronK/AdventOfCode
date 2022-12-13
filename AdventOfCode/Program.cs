@@ -15,6 +15,7 @@ var entryPoints = new List<EntryPoint>
     new("--- Day 10: Cathode-Ray Tube ---", "../../../../Inputs/--- Day 10 Cathode-Ray Tube ---.txt"),
     new("--- Day 11: Monkey in the Middle ---", "../../../../Inputs/--- Day 11 Monkey in the Middle ---.txt"),
     new("--- Day 12: Hill Climbing Algorithm ---", "../../../../Inputs/--- Day 12 Hill Climbing Algorithm ---.txt"),
+    new("--- Day 13: Distress Signal ---", "../../../../Inputs/--- Day 13 Distress Signal ---.txt"),
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -47,6 +48,7 @@ ISolution solution = choiceNumber switch
     10 => new CathodeRayTube(),
     11 => new MonkeyInTheMiddle(),
     12 => new HillClimbing(),
+    13 => new DistressSignal(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 

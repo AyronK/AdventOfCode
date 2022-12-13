@@ -14,6 +14,8 @@ internal class HillClimbing : ISolution
         public Node Parent { get; set; }
     };
 
+    private static readonly object _lock = new();
+
     public void Run(EntryPoint entryPoint)
     {
         char[][] heatmap = File.ReadAllLines(entryPoint.InputPath).Select(l => l.ToArray()).ToArray();
@@ -26,34 +28,36 @@ internal class HillClimbing : ISolution
 
         start.Distance = CalculateDistance(start.Point, end.Point);
 
-        var finalNode = FindShortestPath(heatmap, start, end);
+        var minFromAny = int.MaxValue;
+        var finalNode = FindShortestPath(heatmap, start, end, ref minFromAny);
 
         Console.WriteLine(
             $"The fewest steps required to move from your current position to the location that should get the best signal is {finalNode.Cost}.");
 
-        var minFromAny = int.MaxValue;
+        var lowestTerrainPoints = heatmap.SelectMany(GetPoints)
+            .Where(p => heatmap[p.X][p.Y] == 'a')
+            .OrderBy(p => CalculateDistance(p, end.Point));
 
-        for (var row = 0; row < heatmap.Length; row++)
+        Parallel.ForEach(lowestTerrainPoints, point =>
         {
-            for (var column = 0; column < heatmap[row].Length; column++)
+            var newStart = new Node(point);
+            if (FindShortestPath(heatmap, newStart, end, ref minFromAny) is not { } newFinalNode)
             {
-                var location = heatmap[row][column];
-
-                if (location == 'a')
-                {
-                    var newStart = new Node(new Point(row, column));
-                    if (FindShortestPath(heatmap, newStart, end) is { } newFinalNode)
-                    {
-                        minFromAny = Math.Min(minFromAny, newFinalNode.Cost);
-                    }
-                }
+                return;
             }
-        }
+
+            lock (_lock)
+            {
+                minFromAny = Math.Min(minFromAny, newFinalNode.Cost);
+            }
+        });
 
         Console.WriteLine($"The fewest steps required to move from any position to the location that should get the best signal is {minFromAny}.");
     }
 
-    private static Node? FindShortestPath(char[][] heatmap, Node start, Node end)
+    private IEnumerable<Point> GetPoints(char[] r, int rIdx) => r.Select((_, cIdx) => new Point(rIdx, cIdx));
+
+    private static Node? FindShortestPath(char[][] heatmap, Node start, Node end, ref int shortestSoFar)
     {
         var activeNodes = new HashSet<Node> { start };
         var visitedNodes = new HashSet<Node>();
@@ -61,6 +65,11 @@ internal class HillClimbing : ISolution
         while (activeNodes.Any())
         {
             var checkTile = activeNodes.OrderBy(x => x.CostDistance).First();
+
+            if (checkTile.Cost >= shortestSoFar)
+            {
+                return null;
+            }
 
             if (checkTile.Point == end.Point)
             {
