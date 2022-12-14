@@ -11,52 +11,45 @@ internal class RegolithReservoir : ISolution
         using var file = File.OpenRead(entryPoint.InputPath);
         using var reader = new StreamReader(file);
 
-        HashSet<Point> rocks = new();
         Point sandSpawner = new Point(500, 0);
+        HashSet<Point> rocks = new();
 
         while (!reader.EndOfStream)
         {
-            var points = reader.ReadLine().Split(" -> ").Select(s =>
+            var points = reader.ReadLine()?.Split(" -> ").Select(s =>
             {
                 var coordinates = s.Split(",").Select(int.Parse).ToArray();
                 return new Point(coordinates[0], coordinates[1]);
-            }).ToArray();
+            }).ToArray() ?? Array.Empty<Point>();
 
-            for (var index = 1; index < points.Length; index++)
-            {
-                var point = points[index];
-
-                var xDiff = points[index].X - points[index - 1].X;
-                var yDiff = points[index].Y - points[index - 1].Y;
-
-                if (xDiff == 0)
-                {
-                    for (int i = 0; i <= Math.Abs(yDiff); i++)
-                    {
-                        rocks.Add(point with { Y = point.Y - (i * Math.Sign(yDiff)) });
-                    }
-                }
-                else if (yDiff == 0)
-                {
-                    for (int i = 0; i <= Math.Abs(xDiff); i++)
-                    {
-                        rocks.Add(point with { X = point.X - (i * Math.Sign(xDiff)) });
-                    }
-                }
-            }
+            ParseLineOfRocks(points, rocks);
         }
 
-        var minX = rocks.Append(sandSpawner).Min(r => r.X);
-        var minY = rocks.Append(sandSpawner).Min(r => r.Y);
-        var diffX = rocks.Append(sandSpawner).Max(r => r.X) - minX;
-        var diffY = rocks.Append(sandSpawner).Max(r => r.Y) - minY;
+        var gridElements = rocks.Append(sandSpawner).ToArray();
+        var minX = gridElements.Min(r => r.X);
+        var minY = gridElements.Min(r => r.Y);
+        var diffX = gridElements.Max(r => r.X) - minX;
+        var diffY = gridElements.Max(r => r.Y) - minY;
 
-        int sandSoFar = 0;
+        int floorLevel = diffY + 1;
+
+        var sandGeneratedUntilSandFlows = GenerateSand(sandSpawner, rocks, null, (last, _) => last.X - minX >= diffX || last.Y - minY >= diffY);
+        var sandGeneratedUntilSpawnerIsCovered = GenerateSand(sandSpawner, rocks, floorLevel, (_, blocked) => blocked.Contains(sandSpawner));
+
+        // -1 before last sand overflows
+        Console.WriteLine($"{sandGeneratedUntilSandFlows - 1} units of sand come to rest before sand starts flowing into the abyss below");
+        Console.WriteLine($"{sandGeneratedUntilSpawnerIsCovered} units of sand come to rest before it reaches spawner.");
+    }
+
+    private static int GenerateSand(Point sandSpawner, HashSet<Point> rocks, int? floorLevel, Func<Point, HashSet<Point>, bool> until)
+    {
         Point lastSand = new Point(sandSpawner.X, sandSpawner.Y);
-        bool moved = false;
-        HashSet<Point> blocked = new(rocks);
 
-        while (lastSand.X - minX < diffX + 1 && lastSand.Y - minY < diffY + 1)
+        HashSet<Point> blocked = new(rocks);
+        int sandSoFar = 0;
+        bool moved = false;
+
+        while (!until(lastSand, blocked))
         {
             if (!moved)
             {
@@ -64,7 +57,7 @@ internal class RegolithReservoir : ISolution
                 lastSand = new Point(sandSpawner.X, sandSpawner.Y);
             }
 
-            Point movedSand = MoveSand(lastSand, blocked);
+            Point movedSand = MoveSand(lastSand, blocked, floorLevel);
             moved = movedSand != lastSand;
 
             blocked.Remove(lastSand);
@@ -73,39 +66,42 @@ internal class RegolithReservoir : ISolution
             lastSand = movedSand;
         }
 
-        Console.WriteLine(sandSoFar - 1);
+        return sandSoFar;
+    }
 
-        minX = rocks.Concat(blocked).Append(sandSpawner).Min(r => r.X);
-        minY = rocks.Concat(blocked).Append(sandSpawner).Min(r => r.Y);
-        diffX = rocks.Concat(blocked).Append(sandSpawner).Max(r => r.X) - minX;
-        diffY = rocks.Concat(blocked).Append(sandSpawner).Max(r => r.Y) - minY;
-        var grid = Enumerable.Range(0, diffY + 1).Select(_ => new string('.', diffX + 1).ToCharArray()).ToArray();
-
-        foreach (var point in blocked)
+    private static void ParseLineOfRocks(Point[] points, HashSet<Point> rocks)
+    {
+        for (var index = 1; index < points.Length; index++)
         {
-            grid[point.Y - minY][point.X - minX] = 'o';
-        }
-        
-        foreach (var point in rocks)
-        {
-            grid[point.Y - minY][point.X - minX] = '#';
-        }
+            var point = points[index];
 
-        grid[sandSpawner.Y - minY][sandSpawner.X - minX] = '+';
+            var xDiff = points[index].X - points[index - 1].X;
+            var yDiff = points[index].Y - points[index - 1].Y;
 
-        for (int i = 0; i < grid.Length; i++)
-        {
-            for (int j = 0; j < grid[i].Length; j++)
+            if (xDiff == 0)
             {
-                Console.Write(grid[i][j]);
+                for (int i = 0; i <= Math.Abs(yDiff); i++)
+                {
+                    rocks.Add(point with { Y = point.Y - (i * Math.Sign(yDiff)) });
+                }
             }
-
-            Console.WriteLine();
+            else if (yDiff == 0)
+            {
+                for (int i = 0; i <= Math.Abs(xDiff); i++)
+                {
+                    rocks.Add(point with { X = point.X - (i * Math.Sign(xDiff)) });
+                }
+            }
         }
     }
 
-    private static Point MoveSand(Point sand, HashSet<Point> blocked)
+    private static Point MoveSand(Point sand, HashSet<Point> blocked, int? floorLevel)
     {
+        if (sand.Y == floorLevel)
+        {
+            return sand;
+        }
+        
         var target = sand with { Y = sand.Y + 1 };
         if (!blocked.Contains(target))
         {
