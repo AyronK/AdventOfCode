@@ -4,8 +4,9 @@ namespace AdventOfCode.Cli.Solutions;
 
 internal class RegolithReservoir : ISolution
 {
-    public record Point(int X, int Y);
-
+    private record Point(int X, int Y);
+    private delegate bool StopCondition(Point last, HashSet<Point> blocked);
+    
     public void Run(EntryPoint entryPoint)
     {
         using var file = File.OpenRead(entryPoint.InputPath);
@@ -41,7 +42,7 @@ internal class RegolithReservoir : ISolution
         Console.WriteLine($"{sandGeneratedUntilSpawnerIsCovered} units of sand come to rest before it reaches spawner.");
     }
 
-    private static int GenerateSand(Point sandSpawner, HashSet<Point> rocks, int? floorLevel, Func<Point, HashSet<Point>, bool> until)
+    private static int GenerateSand(Point sandSpawner, IEnumerable<Point> rocks, int? floorLevel, StopCondition until)
     {
         Point lastSand = new Point(sandSpawner.X, sandSpawner.Y);
 
