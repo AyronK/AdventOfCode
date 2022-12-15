@@ -1,5 +1,6 @@
 ﻿using AdventOfCode.Cli.Infrastructure;
 using AdventOfCode.Cli.Solutions;
+using AdventOfCode.Cli.Solutions.Day15;
 
 var entryPoints = new List<EntryPoint>
 {
@@ -17,6 +18,7 @@ var entryPoints = new List<EntryPoint>
     new("--- Day 12: Hill Climbing Algorithm ---", "../../../../Inputs/--- Day 12 Hill Climbing Algorithm ---.txt"),
     new("--- Day 13: Distress Signal ---", "../../../../Inputs/--- Day 13 Distress Signal ---.txt"),
     new("--- Day 14: Regolith Reservoir ---", "../../../../Inputs/--- Day 14 Regolith Reservoir ---.txt"),
+    new("--- Day 15: Beacon Exclusion Zone ---", "../../../../Inputs/--- Day 15 Beacon Exclusion Zone ---.txt"),
 };
 
 Console.WriteLine("--- Advent of Code 2022--- ");
@@ -51,6 +53,7 @@ ISolution solution = choiceNumber switch
     12 => new HillClimbing(),
     13 => new DistressSignal(),
     14 => new RegolithReservoir(),
+    15 => new BeaconExclusionZone(),
     _ => throw new ArgumentOutOfRangeException(),
 };
 
