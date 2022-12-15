@@ -6,6 +6,8 @@ internal class BeaconExclusionZone : ISolution
 {
     record Point(int X, int Y);
 
+    record Area(Point Sensor, Point Beacon, int Distance);
+
     public void Run(EntryPoint entryPoint)
     {
         var input = File.ReadAllLines(entryPoint.InputPath).Select(l =>
@@ -21,33 +23,78 @@ internal class BeaconExclusionZone : ISolution
 
             var sensor = new Point(x, y);
             var beacon = new Point(x2, y2);
-            return (
-                Sensor: sensor,
-                Beacon: beacon, Distance: ManhattanDistance(sensor, beacon));
-        }).ToArray();
+            var distance = ManhattanDistance(sensor, beacon);
+            return new Area(sensor, beacon, distance);
+        }).OrderBy(c => c.Sensor.X).ToArray();
 
         int rowToCheck = 2000000;
+        int threshold = 4000000;
 
-        int maxDistance = input.Select(i => ManhattanDistance(i.Beacon, i.Sensor)).MaxBy(d => d);
-        int xMin = Math.Min(input.Min(c => c.Sensor.X), input.Min(c => c.Beacon.X)) - maxDistance;
-        int xMax = Math.Max(input.Max(c => c.Sensor.X), input.Max(c => c.Beacon.X)) + maxDistance;
+        int xMin = input.Min(c => c.Sensor.X - c.Distance);
+        int xMax = input.Max(c => c.Sensor.X + c.Distance);
 
         int count = 0;
 
         HashSet<Point> beacons = new(input.Select(c => c.Beacon));
+        HashSet<Point> possibleBeacons = new();
 
-        for (int x = xMin; x <= xMax; x++)
+        var searchYMin = Math.Min(rowToCheck, 0);
+        var searchYMax = Math.Max(rowToCheck, threshold);
+
+        for (int y = searchYMin; y <= searchYMax; y++)
         {
-            var currentPoint = new Point(x, rowToCheck);
+            var searchMinX = y == rowToCheck ? xMin : 0;
+            var searchMaxX = y == rowToCheck ? xMax : threshold;
 
-            if (!beacons.Contains(currentPoint) &&
-                input.Any(e => e.Distance >= ManhattanDistance(e.Sensor, currentPoint)))
+            for (int x = searchMinX; x <= searchMaxX; x++)
             {
-                count++;
+                var currentPoint = new Point(x, y);
+                possibleBeacons.Add(currentPoint);
+
+                if (!beacons.Contains(currentPoint) &&
+                    input.FirstOrDefault(e => e.Distance >= ManhattanDistance(e.Sensor, currentPoint)) is { } found)
+                {
+                    if (y == rowToCheck)
+                    {
+                        count++;
+                    }
+                    else
+                    {
+                        var fullDiameter = (2 * found.Distance + 1);
+                        var yOffset = Math.Abs(currentPoint.Y - found.Sensor.Y);
+                        var amountOfBlockedInRow = fullDiameter - 2 * yOffset;
+
+                        x += (amountOfBlockedInRow / 2) - Math.Abs(currentPoint.X - found.Sensor.X);
+                    }
+
+                    possibleBeacons.Remove(currentPoint);
+                }
+            }
+        }
+
+        foreach (var possibleBeacon in possibleBeacons)
+        {
+            if (!beacons.Contains(possibleBeacon) && IsValidDistressBeacon(possibleBeacon, threshold))
+            {
+                Console.WriteLine($"{possibleBeacon.X},{possibleBeacon.Y}");
+                Console.WriteLine(GetTuningFrequency(possibleBeacon));
             }
         }
 
         Console.WriteLine(count);
+    }
+
+    static long GetTuningFrequency(Point a)
+    {
+        checked
+        {
+            return (long)a.X * 4000000 + a.Y;
+        }
+    }
+
+    static bool IsValidDistressBeacon(Point a, int threshold)
+    {
+        return a.X >= 0 && a.X <= threshold && a.Y >= 0 && a.Y <= threshold;
     }
 
     static int ManhattanDistance(Point a, Point b)
